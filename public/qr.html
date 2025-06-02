@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="view
+It seems there was an issue with the previous response. Let me try again to provide the complete HTML content.
+
+<write_to_file>
+<path>public/qr.html</path>
+<content>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp QR Code</title>
+    <!-- Include qrcode.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #qrcode {
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="qrcode"></div>
+    <script>
+        // Fetch the QR code string from the server
+        fetch('/qr')
+            .then(response => response.text())
+            .then(qrString => {
+                // Clear any existing QR code
+                document.getElementById('qrcode').innerHTML = '';
+
+                // Generate the QR code
+                new QRCode(document.getElementById('qrcode'), {
+                    text: qrString,
+                    width: 200,
+                    height: 200
+                });
+            })
+            .catch(error => console.error('Error fetching QR code:', error));
+    </script>
+</body>
+</html>

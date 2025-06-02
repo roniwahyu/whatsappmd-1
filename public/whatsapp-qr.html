@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp QR Code Connection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #128C7E; /* WhatsApp green */
+            margin-bottom: 20px;
+        }
+        #qrcode {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #status {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top-color: #128C7E;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .connect-button {
+            background-color: #128C7E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .connect-button:hover {
+            background-color: #0a6b63;
+        }
+        .attempt-counter {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        .error {
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #e53935;
+        }
+        .success {
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            color: #43a047;
+        }
+        .warning {
+            background-color: #fff8e1;
+            border: 1px solid #ffecb3;
+            color: #ffb300;
+        }
+        .info {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            color: #1565c0;
+        }
+    </style>
+    <!-- Include qrcode.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Connect to WhatsApp</h1>
+        <div id="qrcode"></div>
+        <button id="connect-button" class="connect-button">Connect Now</button>
+        <p id="status" class="info">Loading QR code...</p>
+        <p id="attempt-counter" class="attempt-counter">Connection attempts: 0</p>
+    </div>
+    <script>
+        let connectionAttempts = 0;
+        let qrCodeRefreshInterval;
+        let statusCheckInterval;
+
+        // Function to update attempt counter
+        function updateAttemptCounter() {
+            const counterElement = document.getElementById('attempt-counter');
+            counterElement.textContent = `Connection attempts: ${connectionAttempts}`;
+        }
+
+        // Function to fetch and render QR code
+        function fetchAndRenderQRCode() {
+            fetch('/qr')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch QR code');
+                    }
+                    return response.text();
+                })
+                .then(qrString => {
+                    // Clear any existing QR code
+                    document.getElementById('qrcode').innerHTML = '';
+                    
+                    // Generate QR code
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: qrString,
+                        width: 200,
+                        height: 200
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching QR code:', error);
+                });
+        }
+
+        // Function to update status display
+        function updateStatusDisplay(status) {
+            const statusElement = document.getElementById('status');
+            
+            switch(status) {
+                case 'connected':
+                    statusElement.textContent = '✅ WhatsApp is connected successfully!';
+                    statusElement.className = 'success';
+                    break;
+                case 'qr_pending':
+                    statusElement.textContent = '🔍 QR code generated. Scan with WhatsApp to connect.';
+                    statusElement.className = 'warning';
+                    break;
+                case 'connecting':
+                    statusElement.textContent = '⏳ Connecting to WhatsApp...';
+                    statusElement.className = 'info';
+                    break;
+                case 'disconnected':
+                    statusElement.textContent = '❌ WhatsApp is not connected. Please check the connection.';
+                    statusElement.className = 'error';
+                    break;
+                default:
+                    statusElement.textContent = '❓ Unknown status: ' + status;
+                    statusElement.className = 'error';
+            }
+        }
+
+        // Function to attempt connection
+        function attemptConnection() {
+            connectionAttempts++;
+            updateAttemptCounter();
+            
+            // Check status before attempting connection
+            fetch('/status')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch connection status');
+                    }
+                    return response.json();
+                })
+                .then(status => {
+                    if (status.status === 'qr_pending') {
+                        // Initiate connection attempt
+                        statusElement.textContent = 'Attempting to connect...';
+                        statusElement.className = 'info';
+                        
+                        // In a real implementation, you would call an endpoint to initiate connection
+                        // For example: fetch('/connect', { method: 'POST' })
+                        //   .then(response => response.json())
+                        //   .then(data => {
+                        //       if (data.success) {
+                        //           updateStatusDisplay('connected');
+                        //       } else {
+                        //           updateStatusDisplay('error');
+                        //       }
+                        //   });
+                        
+                        // For now, we'll simulate a connection
+                        setTimeout(() => {
+                            const randomSuccess = Math.random() > 0.3;
+                            if (randomSuccess) {
+                                updateStatusDisplay('connected');
+                            } else {
+                                updateStatusDisplay('disconnected');
+                            }
+                        }, 1500);
+                    } else {
+                        updateStatusDisplay(status.status);
+                    }
+                })
+                .catch(error => {
+                    statusElement.textContent = 'Error: ' + error.message;
+                    statusElement.className = 'error';
+                });
+        }
+
+        // Initialize when page loads
+        window.onload = function() {
+            // Start refreshing QR code every 5 seconds
+            fetchAndRenderQRCode();
+            
+            // Start checking status every 2 seconds for faster updates
+            updateStatusDisplay();
+            statusCheckInterval = setInterval(updateStatusDisplay, 2000);
+            
+            // Set up interval to refresh QR code every 5 seconds
+            qrCodeRefreshInterval = setInterval(fetchAndRenderQRCode, 5000);
+            
+            // Set up button click handler
+            document.getElementById('connect-button').addEventListener('click', attemptConnection);
+        };
+    </script>
+</body>
+</html>

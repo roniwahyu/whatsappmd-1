@@ -6,17 +6,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(express.static('public'));
 
 // Route to get QR code
 app.get('/qr', (req, res) => {
     const qr = whatsappService.getQR();
     if (qr) {
-        qrcodeTerminal.generate(qr, { small: true }, (qrCodeString) => {
-            // Send the QR code string that was printed to the terminal
-            // In a real frontend, you'd convert the original qr string (not qrCodeString)
-            // to an image. qrCodeString is for terminal display.
-            res.type('text/plain').send(qrCodeString + "\n\nQR code also visible in server console. Scan with WhatsApp.");
-        });
+        res.type('text/plain').send(qr);
     } else {
         res.status(404).send('QR code not available. Current status: ' + whatsappService.getConnectionStatus());
     }
